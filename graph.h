@@ -7,44 +7,39 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
 
 
-
-class Graph{
-    std::string data;
-public:
-    const std::string &getData() const;
+class Graph {
+    std::vector<int> data;
 
 private:
     int nbLines;
-    const Graph* parent;
+    const Graph *parent;
     int nullPos;
     int swap;
     size_t g;
 public:
-    size_t getG() const;
-
-    void setG(size_t g);
-
-    size_t getH() const;
-
-    void setH(size_t h);
-
-    size_t getF() const;
-
-    void setF(size_t f);
 
 private:
     size_t h;
     size_t f;
-    size_t getNullPos(const std::string& data);
+
+    static size_t getNullPos(const std::vector<int>& v);
+
+
+
 public:
-    Graph(std::string data, int nbLines,const Graph* parent, size_t g,int swap =-1);
-    size_t size() const;
+    Graph(const std::string &data, int nbLines, const Graph *parent, size_t g, int swap = -1);
+
+    Graph(std::vector<int> data, int nbLines, const Graph *parent, size_t g, int nullPos, int swap = -1);
+
+    static std::vector<int> transformIntoIntVector(const std::string & data);
 
     size_t heuristic();
 
     std::vector<Graph> adjacent(int pos) const;
+
     std::vector<Graph> adjacent() const;
 
     bool operator==(const Graph &rhs) const;
@@ -59,106 +54,86 @@ public:
 
     bool operator>=(const Graph &rhs) const;
 
-    static bool compareCost(const  Graph&a, const Graph&b);
+    static bool compareCost(const Graph &a, const Graph &b);
 
     std::string displayParent();
+
+    bool isEqualTo(const std::vector<int>& s);
 };
 
-Graph::Graph(std::string data, int nbLines,const Graph* parent, size_t g, int swap) : data(std::move(data)), nbLines(nbLines), parent(parent), g(g), swap(swap){
+Graph::Graph(const std::string &data, int nbLines, const Graph *parent, size_t g, int swap) : nbLines(nbLines),
+                                                                                              parent(parent), g(g),
+                                                                                              swap(swap) {
+    this->data = transformIntoIntVector(data);
     nullPos = getNullPos(this->data);
     h = heuristic();
-    f = g+h;
+    f = g + h;
 }
 
-size_t Graph::size() const {
-    return nbLines*nbLines;
+Graph::Graph(std::vector<int> data, int nbLines, const Graph *parent, size_t g, int nullPos, int swap) : data(
+        std::move(data)), nbLines(nbLines), parent(parent), g(g), nullPos(nullPos), swap(swap) {
+    h = heuristic();
+    f = g + h;
 }
 
-
-std::vector<Graph> Graph::adjacent(int pos) const{
+std::vector<Graph> Graph::adjacent(int pos) const {
     std::vector<Graph> output;
     int size = nbLines * nbLines;
     // LEFT
     if (pos % nbLines - 1 >= 0) {
-        std::string tmp(data);
+        std::vector<int> tmp(data);
         std::swap(tmp[pos], tmp[pos - 1]);
-        output.emplace_back(tmp, nbLines, this, g+1, pos-1);
+        output.emplace_back(tmp, nbLines, this, g + 1, pos-1, pos - 1);
 
     }
     // UP
     if (pos - nbLines >= 0) {
-        std::string tmp(data);
+        std::vector<int> tmp(data);
         std::swap(tmp[pos], tmp[pos - nbLines]);
-        output.emplace_back(tmp, nbLines, this, g+1, pos-nbLines);
+        output.emplace_back(tmp, nbLines, this, g + 1, pos - nbLines, pos - nbLines);
     }
     // Right
     if ((pos + 1) % nbLines) {
-        std::string tmp(data);
+        std::vector<int> tmp(data);
         std::swap(tmp[pos], tmp[pos + 1]);
-        output.emplace_back(tmp, nbLines, this, g+1, pos+1);
+        output.emplace_back(tmp, nbLines, this, g + 1, pos + 1, pos + 1);
     }
     // DOWN
     if (pos + nbLines < size) {
-        std::string tmp(data);
+        std::vector<int> tmp(data);
         std::swap(tmp[pos], tmp[pos + nbLines]);
-        output.emplace_back(tmp, nbLines, this, g+1, pos+nbLines);
+        output.emplace_back(tmp, nbLines, this, g + 1, pos + nbLines, pos + nbLines);
     }
 
     return output;
 }
 
-size_t Graph::getNullPos(const std::string &data) {
-    size_t output = data.find('0');
-    if(output == std::string::npos){
-        throw std::invalid_argument("");
+size_t Graph::getNullPos(const std::vector<int>& v) {
+    for (int i = 0; i < v.size(); ++i) {
+        if(v[i] == 0){
+            return i;
+        }
     }
-    return output;
+    throw std::invalid_argument("get null pos");
 }
 
 size_t Graph::heuristic() {
     size_t cost = 0;
     for (int i = 0; i < data.size(); i++) {
-        int v = data[i]-'0';
-        if (!v){
+        int v = data[i];
+        if (!v) {
             continue;
         }
-        int gx = v%nbLines;
-        int gy = v/nbLines;
-        int x = i %nbLines;
+        int gx = v % nbLines;
+        int gy = v / nbLines;
+        int x = i % nbLines;
         int y = i / nbLines;
 
-        cost+= abs(x-gx)+abs(y-gy);
+        cost += abs(x - gx) + abs(y - gy);
     }
     return cost;
 }
 
-size_t Graph::getG() const {
-    return g;
-}
-
-void Graph::setG(size_t g) {
-    Graph::g = g;
-}
-
-size_t Graph::getH() const {
-    return h;
-}
-
-void Graph::setH(size_t h) {
-    Graph::h = h;
-}
-
-size_t Graph::getF() const {
-    return f;
-}
-
-void Graph::setF(size_t f) {
-    Graph::f = f;
-}
-
-const std::string &Graph::getData() const {
-    return data;
-}
 
 bool Graph::operator==(const Graph &rhs) const {
     return data == rhs.data;
@@ -185,7 +160,7 @@ bool Graph::operator>=(const Graph &rhs) const {
 }
 
 bool Graph::compareCost(const Graph &a, const Graph &b) {
-    return a.f < b.f;
+    return a.f > b.f;
 }
 
 std::vector<Graph> Graph::adjacent() const {
@@ -194,15 +169,39 @@ std::vector<Graph> Graph::adjacent() const {
 
 std::string Graph::displayParent() {
     std::string out;
-    const Graph* p = this;
-    while (p != nullptr){
-        if (p->swap!= -1){
-            out+= std::to_string(p->swap);
+    const Graph *p = this;
+    while (p != nullptr) {
+        if (p->swap != -1) {
+            out.insert(0,std::to_string(p->swap)+" ");
         }
-        std::cout << p->data <<" "<<p->swap<< std::endl;
         p = p->parent;
     }
     return out;
 }
+
+std::vector<int> Graph::transformIntoIntVector(const std::string &data) {
+    std::stringstream iss(data);
+    std::vector<int> out;
+    out.reserve(data.size());
+    int i;
+    while(!iss.eof()){
+        iss >> i;
+        out.push_back(i);
+    }
+    return out;
+}
+
+bool Graph::isEqualTo(const std::vector<int> &s) {
+    if (s.size() != data.size()){
+        throw std::invalid_argument("is equal to");
+    }
+    for (int i = 0; i < data.size(); ++i) {
+        if(data[i] != (s[i])){
+            return false;
+        }
+    }
+    return true;
+}
+
 
 #endif //TAQUIN_GRAPH_H

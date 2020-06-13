@@ -15,19 +15,16 @@ class Compare
 public:
     bool operator() (const Graph& a, const Graph& b)
     {
-        return !Graph::compareCost(a,b);
+        return Graph::compareCost(a,b);
     }
 };
 
 
 
 int main() {
-    std::string input = "3 8 1 7 2 0 5 6 4";
-    input.erase(remove_if(input.begin(), input.end(), isspace), input.end());
+    std::string input = "4 7 1 0 2 3 6 8 5";
     Graph start(input, 3, nullptr, 0);
-    Graph test("012345678", 3, nullptr, 0);
-    test.heuristic();
-    std::string end = "012345678";
+    std::vector<int> end = Graph::transformIntoIntVector("0 1 2 3 4 5 6 7 8");
     std::priority_queue<Graph, std::vector<Graph>, Compare> open;
     std::set<Graph> endList;
     open.push(start);
@@ -35,7 +32,7 @@ int main() {
     while (!open.empty()){
         Graph current = open.top();
         open.pop();
-        if (current.getData() == end){
+        if (current.isEqualTo(end)){
             sol = current.displayParent();
             break;
         }
@@ -47,8 +44,8 @@ int main() {
             open.emplace(adj);
         }
     }
-    for (auto i = sol.rbegin(); i != sol.rend();++i) {
-        std::cout << *i<<" ";
+    for (char & i : sol) {
+        std::cout << i;
     }
     return 0;
 }
