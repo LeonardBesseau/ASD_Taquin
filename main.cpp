@@ -1,3 +1,21 @@
+/* ---------------------------
+Laboratoire : 12
+Fichier : main.cpp
+Auteur(s) : Besseau
+Date : 21-06-2020
+
+But : Ecrire un programme permettant de générer la séquence la plus courte
+      des cases à bouger pour remettre le taquin 3x3 suivant en ordre
+
+Remarque(s) : Complexité en temps 3x3 20 ms (moyenne)
+              Complexité en mémoire 3x3 moyenne 200KB max 2200 KB
+              4x4 possible mais temps variable selon complexité
+              5x5 aussi mais de forte chances de manquer de mémoire avant de trouver une solution
+              (utiliser IDA au lieu de A*)
+
+Compilateur : gcc version 7.4.0
+
+--------------------------- */
 #include <iostream>
 #include <set>
 #include <list>
@@ -16,17 +34,17 @@ public:
 
 std::string AStart(const std::string &input) {
     Graph start(input, nullptr, 0);
-    std::priority_queue<Graph, std::vector<Graph>, Compare> open;
-    std::set<Graph> endList;
-    open.push(start);
+    std::priority_queue<Graph, std::deque<Graph>, Compare> frontier;
+    std::set<Graph> explored;
+    frontier.push(start);
     std::string sol;
     size_t solutionSize = 0;
     size_t createdNodes = 0;
-    while (!open.empty()) {
-        Graph current = open.top();
-        open.pop();
+    while (!frontier.empty()) {
+        Graph current = frontier.top();
+        frontier.pop();
 
-        auto test = endList.insert(current);
+        auto test = explored.insert(current);
         if (!test.second) {
             continue;
         }
@@ -38,19 +56,24 @@ std::string AStart(const std::string &input) {
 
         for (const auto &adj : (*test.first).adjacent()) {
             ++createdNodes;
-            open.emplace(adj);
+            frontier.emplace(adj);
         }
     }
     std::cout << "Solution size\t: " << solutionSize << std::endl
               << "Created nodes\t: " << createdNodes << " : " << createdNodes * sizeof(Graph) / 1000 << " KB"
               << std::endl
-              << "Explored nodes\t: " << endList.size() << std::endl;
+              << "Explored nodes\t: " << explored.size() << std::endl;
     return sol;
 }
 
 
+
 int main() {
-    std::string input = "4 3 7 2 10 1 5 11 8 12 6 15 14 13 0 9";
+
+    //Input can be given all on one line or separated by \n
+    // 8 7 6 0 4 1 2 5 3 : 31 movement for solution (longest possible)
+    // 8 0 6 5 4 7 2 3 1 : 31 movement for solution (longest possible)
+    std::string input = "8 0 6 5 4 7 2 3 1";
     auto t1 = std::chrono::high_resolution_clock::now();
     std::string sol = AStart(input);
     auto t2 = std::chrono::high_resolution_clock::now();
