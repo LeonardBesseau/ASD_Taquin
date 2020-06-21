@@ -1,51 +1,60 @@
 #include <iostream>
+#include <set>
+#include <list>
+#include <queue>
+#include <chrono>
 
 #include "graph.h"
 
 
-
-#include <set>
-#include <list>
-#include <queue>
-#include <functional>
-#include <algorithm>
-
-class Compare
-{
+class Compare {
 public:
-    bool operator() (const Graph& a, const Graph& b)
-    {
-        return Graph::compareCost(a,b);
+    bool operator()(const Graph &a, const Graph &b) {
+        return Graph::compareCost(a, b);
     }
 };
 
-
-
-int main() {
-    std::string input = "4 7 1 0 2 3 6 8 5";
-    Graph start(input, 3, nullptr, 0);
-    std::vector<int> end = Graph::transformIntoIntVector("0 1 2 3 4 5 6 7 8");
+std::string AStart(const std::string &input) {
+    Graph start(input, nullptr, 0);
     std::priority_queue<Graph, std::vector<Graph>, Compare> open;
     std::set<Graph> endList;
     open.push(start);
     std::string sol;
-    while (!open.empty()){
+    size_t solutionSize = 0;
+    size_t createdNodes = 0;
+    while (!open.empty()) {
         Graph current = open.top();
         open.pop();
-        if (current.isEqualTo(end)){
-            sol = current.displayParent();
-            break;
-        }
-        auto test =endList.insert(current);
-        if (!test.second){
+
+        auto test = endList.insert(current);
+        if (!test.second) {
             continue;
         }
-        for(const auto& adj : (*test.first).adjacent()){
+
+        if (!current.getH()) {
+            sol = current.displayParent(solutionSize);
+            break;
+        }
+
+        for (const auto &adj : (*test.first).adjacent()) {
+            ++createdNodes;
             open.emplace(adj);
         }
     }
-    for (char & i : sol) {
-        std::cout << i;
-    }
+    std::cout << "Solution size\t: " << solutionSize << std::endl
+              << "Created nodes\t: " << createdNodes << " : " << createdNodes * sizeof(Graph) / 1000 << " KB"
+              << std::endl
+              << "Explored nodes\t: " << endList.size() << std::endl;
+    return sol;
+}
+
+
+int main() {
+    std::string input = "4 3 7 2 10 1 5 11 8 12 6 15 14 13 0 9";
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::string sol = AStart(input);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+    std::cout << sol << std::endl << duration<<" ms" ;
     return 0;
 }
